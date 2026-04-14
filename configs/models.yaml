@@ -1,0 +1,42 @@
+defaults:
+  ollama_url: "http://localhost:11434"
+  vllm_url: "http://localhost:8000"
+  timeout: 120
+
+models:
+  - id: "qwen2_5_7b"
+    backend: "ollama"
+    model_name: "qwen2.5:7b"
+    enabled: true
+    timeout: 120
+
+  - id: "llama3_1_8b"
+    backend: "ollama"
+    model_name: "llama3.1:8b"
+    enabled: true
+    timeout: 120
+
+  - id: "gemma2_9b"
+    backend: "ollama"
+    model_name: "gemma2:9b"
+    enabled: true
+    timeout: 120
+
+  - id: "qwen2_5_7b_vllm"
+    backend: "vllm"
+    model_name: "Qwen/Qwen2.5-7B-Instruct"
+    enabled: false
+    timeout: 120
+
+  - id: "llama3_1_8b_vllm"
+    backend: "vllm"
+    model_name: "meta-llama/Llama-3.1-8B-Instruct"
+    enabled: false
+    timeout: 120
+
+  - id: "gemma2_9b_vllm"
+    backend: "vllm"
+    model_name: "google/gemma-2-9b-it"
+    enabled: false
+    timeout: 120
+

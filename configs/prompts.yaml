@@ -1,0 +1,80 @@
+prompts:
+  - id: "strict_json_capital"
+    category: "instruction_following"
+    prompt: "Reply with JSON only using keys country and capital. What is the capital of France?"
+    temperatures: [0.2, 0.8]
+    max_tokens: 80
+    expected_keywords: ["France", "Paris"]
+    required_substrings: ["{", "}", "country", "capital"]
+
+  - id: "bullet_steps"
+    category: "instruction_following"
+    prompt: "Give exactly three bullet points explaining how to boil an egg."
+    temperatures: [0.2, 0.8]
+    max_tokens: 120
+    expected_keywords: ["water", "egg", "boil"]
+    required_substrings: ["- "]
+
+  - id: "meeting_summary"
+    category: "summarization"
+    prompt: "Summarize the following meeting notes in 3 concise sentences."
+    context: "The team discussed delayed API integrations, agreed to cut one low-priority dashboard feature, and decided to ship the bug fixes on Friday. Alice will own customer communication. Ben will validate the rollback plan."
+    temperatures: [0.2]
+    max_tokens: 120
+    expected_keywords: ["Friday", "Alice", "Ben"]
+    required_substrings: []
+
+  - id: "invoice_extraction"
+    category: "extraction"
+    prompt: "Extract vendor, invoice number, total, and due date as key: value lines."
+    context: "Invoice from Northwind Labs. Invoice #NW-2048. Total due: $482.15. Payment due on 2026-05-01."
+    temperatures: [0.2]
+    max_tokens: 120
+    expected_keywords: ["Northwind", "NW-2048", "$482.15", "2026-05-01"]
+    required_substrings: [":"]
+
+  - id: "entity_extraction"
+    category: "extraction"
+    prompt: "List the people, organization, and location mentioned in the text."
+    context: "Priya met with OpenAI researchers in Toronto to discuss evaluation tooling."
+    temperatures: [0.2]
+    max_tokens: 100
+    expected_keywords: ["Priya", "OpenAI", "Toronto"]
+    required_substrings: []
+
+  - id: "support_classification"
+    category: "instruction_following"
+    prompt: "Classify the support message as billing, technical, or account. Answer with one label and one short sentence."
+    context: "I reset my password twice and still cannot sign in to the dashboard."
+    temperatures: [0.2, 0.8]
+    max_tokens: 80
+    expected_keywords: ["technical", "sign in"]
+    required_substrings: []
+
+  - id: "long_context_fact_recall"
+    category: "long_context_stress"
+    prompt: "Read the document and answer: which city hosts the final workshop and what is the project codename?"
+    context: "Project notes section A. The team started prototyping in March. Section B mentions a budget review. Section C says the codename is Atlas Fern. Section D lists several workshops: Montreal, Halifax, and Vancouver. Section E confirms the final workshop will be held in Vancouver after the QA round. Section F repeats that the codename Atlas Fern should not change."
+    temperatures: [0.2]
+    max_tokens: 120
+    expected_keywords: ["Vancouver", "Atlas Fern"]
+    required_substrings: []
+
+  - id: "long_context_summary"
+    category: "long_context_stress"
+    prompt: "Summarize the document in four sentences and mention the launch month, owner, and top risk."
+    context: "Program update: the product launch target is September. Marta owns partner onboarding. The highest risk is unstable data feeds from an external vendor. Secondary risks include documentation lag and delayed review cycles. The mitigation plan is weekly validation and an internal fallback cache."
+    temperatures: [0.2, 0.8]
+    max_tokens: 160
+    expected_keywords: ["September", "Marta", "data feeds"]
+    required_substrings: []
+
+  - id: "structured_rewrite"
+    category: "summarization"
+    prompt: "Rewrite the text as a numbered list with exactly two items."
+    context: "The release is blocked by two issues: the container image is too large, and the integration tests are flaky in CI."
+    temperatures: [0.2]
+    max_tokens: 100
+    expected_keywords: ["container", "tests"]
+    required_substrings: ["1.", "2."]
+
