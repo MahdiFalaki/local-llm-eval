@@ -79,21 +79,40 @@ def detect_torch_cuda() -> dict[str, Any]:
     if importlib.util.find_spec("torch") is None:
         return {"installed": False, "cuda_available": False, "gpu_count": 0, "gpus": []}
 
-    import torch  # type: ignore
+    try:
+        import torch  # type: ignore
+    except Exception as exc:  # pragma: no cover - depends on local torch install state
+        return {
+            "installed": True,
+            "cuda_available": False,
+            "gpu_count": 0,
+            "gpus": [],
+            "error": str(exc),
+        }
 
     gpus: list[dict[str, Any]] = []
-    cuda_available = bool(torch.cuda.is_available())
-    gpu_count = int(torch.cuda.device_count()) if cuda_available else 0
+    try:
+        cuda_available = bool(torch.cuda.is_available())
+        gpu_count = int(torch.cuda.device_count()) if cuda_available else 0
 
-    for index in range(gpu_count):
-        props = torch.cuda.get_device_properties(index)
-        gpus.append(
-            {
-                "name": props.name,
-                "total_memory_gb": round(props.total_memory / (1024 ** 3), 2),
-                "index": index,
-            }
-        )
+        for index in range(gpu_count):
+            props = torch.cuda.get_device_properties(index)
+            gpus.append(
+                {
+                    "name": props.name,
+                    "total_memory_gb": round(props.total_memory / (1024 ** 3), 2),
+                    "index": index,
+                }
+            )
+    except Exception as exc:  # pragma: no cover - depends on local torch/CUDA state
+        return {
+            "installed": True,
+            "version": getattr(torch, "__version__", "unknown"),
+            "cuda_available": False,
+            "gpu_count": 0,
+            "gpus": [],
+            "error": str(exc),
+        }
 
     return {
         "installed": True,
@@ -220,4 +239,3 @@ def print_environment_summary(summary: dict[str, Any]) -> None:
             f"  {backend_name}: installed={status['installed']} "
             f"reachable={status['reachable']} details={status['details']}"
         )
-

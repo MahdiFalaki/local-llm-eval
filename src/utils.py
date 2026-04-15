@@ -7,7 +7,7 @@ import logging
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import yaml
 
@@ -29,6 +29,15 @@ def write_json(path: Path, payload: dict[str, Any] | list[dict[str, Any]]) -> No
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2, ensure_ascii=True)
+
+
+def write_jsonl(path: Path, rows: Iterable[dict[str, Any]]) -> None:
+    """Write newline-delimited JSON rows."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, ensure_ascii=True))
+            handle.write("\n")
 
 
 def ensure_directory(path: Path) -> Path:
@@ -64,3 +73,8 @@ def shorten(text: str, limit: int = 160) -> str:
         return compact
     return f"{compact[: limit - 3]}..."
 
+
+def sanitize_name(value: str) -> str:
+    """Convert an arbitrary name into a filesystem-safe token."""
+    sanitized = re.sub(r"[^a-zA-Z0-9._-]+", "-", value.strip()).strip("-._")
+    return sanitized or "run"

@@ -1,170 +1,124 @@
 # local-llm-eval
 
-`local-llm-eval` is a small Python evaluation harness for comparing local LLMs with Ollama as the default backend and vLLM as an optional backend.
+`local-llm-eval` is a lightweight local evaluation pipeline for served LLMs. It is built for practical offline evaluation with Ollama first, optional vLLM support, YAML-defined prompt suites, benchmark-style IFEval runs, and single-run analysis artifacts that are easy to inspect and reuse in notes or a README.
 
-It runs a small YAML-defined prompt suite across local models and saves structured results to `outputs/results.csv` and `outputs/results.json`.
+## What It Supports
 
-## What It Measures
+- Prompt-suite evaluation from YAML prompt and model configs
+- IFEval benchmark evaluation using the `google/IFEval` dataset
+- Single-run analysis from an already completed run
+- Offline artifacts in JSON, CSV, JSONL, and Markdown
 
-- Latency
-- Tokens per second
-- Response length
-- Simple rubric score
-- Short-context vs longer-context behavior
-- Low vs higher temperature behavior
+## Main Workflow
 
-## Project Layout
+1. Check the local environment
+2. Run an evaluation
+3. Analyze the completed run
 
-```text
-local-llm-eval/
-├── configs/
-│   ├── models.yaml
-│   └── prompts.yaml
-├── outputs/
-├── scripts/
-│   ├── run_ollama.sh
-│   └── run_vllm.sh
-├── src/
-│   ├── backends/
-│   │   ├── ollama_backend.py
-│   │   └── vllm_backend.py
-│   ├── env_check.py
-│   ├── evaluator.py
-│   ├── rubric.py
-│   ├── runner.py
-│   └── utils.py
-├── environment.yml
-├── requirements.txt
-└── .gitignore
-```
+## Project Structure
 
-## Dependency Notes
-
-This project was built to reuse the existing Conda environment named `local-llm-eval`.
-
-Minimal baseline Python dependencies:
-
-- `PyYAML`
-- `requests`
-- `psutil`
-
-Optional dependencies:
-
-- `torch` for richer CUDA detection
-- `vllm` if you want to use the optional vLLM path
+- `configs/` - model and prompt configuration
+- `src/runner.py` - CLI entrypoint
+- `src/backends/` - Ollama and optional vLLM backends
+- `src/ifeval.py` - IFEval dataset loading and benchmark execution
+- `src/analyze.py` - single-run analysis and reporting
+- `outputs/` - saved runs and analysis artifacts
 
 ## Setup
 
-If your Conda environment already exists, reuse it:
+Reuse the existing Conda environment if it is already available:
 
 ```bash
 conda activate local-llm-eval
 python --version
 ```
 
-If you want to align the environment to the project file:
+If you want to align the environment with the project file:
 
 ```bash
 conda env update -n local-llm-eval -f environment.yml
 ```
 
-## Verify The Environment
-
-Run:
+## Environment Check
 
 ```bash
 python -m src.runner --check-only
 ```
 
-This prints a clean summary including:
-
-- OS
-- Python version
-- CPU and RAM
-- `torch` CUDA availability if installed
-- GPU details from `torch` and `nvidia-smi` when available
-- Whether `ollama` is installed and reachable
-- Whether `vllm` is installed
-
-## Recommended Models For 24GB VRAM
-
-These are preloaded in `configs/models.yaml` for Ollama:
+## Recommended Models
 
 - `qwen2.5:7b`
 - `llama3.1:8b`
 - `gemma2:9b`
 
-Optional disabled vLLM examples are also included in the config.
+## How to Run
 
-## Ollama Mode
-
-Ollama is the default path.
-
-Start Ollama separately, make sure the models exist locally, then run:
+### Prompt-Suite Evaluation
 
 ```bash
-python -m src.runner --backend ollama
+python -m src.runner \
+  --backend ollama \
+  --models qwen2_5_7b llama3_1_8b gemma2_9b \
+  --run-name prompts-full
 ```
 
-Or with the helper script:
+### IFEval Smoke Run
 
 ```bash
-bash scripts/run_ollama.sh
+python -m src.runner \
+  --benchmark ifeval \
+  --backend ollama \
+  --models qwen2_5_7b \
+  --subset-size 3 \
+  --run-name ifeval-smoke
 ```
 
-Example with a custom Ollama URL:
+### IFEval Full Run
 
 ```bash
-python -m src.runner --backend ollama --ollama-url http://localhost:11434
+python -m src.runner \
+  --benchmark ifeval \
+  --backend ollama \
+  --models qwen2_5_7b llama3_1_8b gemma2_9b \
+  --run-name ifeval-full
 ```
 
-## vLLM Mode
-
-vLLM is optional and intentionally minimal.
-
-This project assumes a vLLM OpenAI-compatible server is already running. The backend stays disabled unless you explicitly request it.
-
-Run:
+### Analyze Completed Run
 
 ```bash
-python -m src.runner --backend vllm --vllm-url http://localhost:8000
+python -m src.runner analyze \
+  --run outputs/ifeval/ifeval-full \
+  --out outputs/analysis/ifeval-full
 ```
 
-Or with the helper script:
+## Analysis Outputs
 
-```bash
-bash scripts/run_vllm.sh
-```
+The single-run analysis step writes Markdown and CSV artifacts that are directly usable in project notes or a README:
 
-## Example Commands
+- `model_summary.md` / `model_summary.csv` - top-level model overview
+- `failure_breakdown.md` / `failure_breakdown.csv` - where each model fails
+- `analysis_report.md` - short human-readable summary
 
-```bash
-python -m src.runner --check-only
-python -m src.runner --backend ollama
-python -m src.runner --backend ollama --models-config configs/models.yaml --prompts-config configs/prompts.yaml
-python -m src.runner --backend vllm --vllm-url http://localhost:8000
-```
+These artifacts matter because they cover three separate jobs cleanly:
 
-## Example Outputs
+- overview: which model performed best overall
+- diagnosis: where each model tends to fail
+- summary: a compact write-up that is easy to reuse
 
-CSV columns include:
+## Backend Notes
 
-- `model_id`
-- `backend`
-- `prompt_id`
-- `temperature`
-- `latency_seconds`
-- `tokens_per_second`
-- `response_length_chars`
-- `response_length_words`
-- `rubric_score`
-- `error`
+- Ollama is the default and primary backend
+- vLLM is optional and only needed if you want the alternate serving path
 
-JSON output stores the same records plus a summary block and environment metadata.
+## Minimal Recommended Workflow
 
-## Notes
+1. Run full IFEval once
+2. Analyze the completed run
+3. Reuse the generated Markdown and CSV artifacts in your README or notes
 
-- Ollama is the default and recommended local path.
-- vLLM is optional and isolated behind its own backend file.
-- If `torch` or `vllm` are not installed, the project falls back cleanly instead of failing during environment checks.
+## Short Notes
 
+- Offline and file-based
+- Small and reproducible
+- No judge-model dependency
+- Ollama-first

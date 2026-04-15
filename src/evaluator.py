@@ -8,8 +8,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
-from src.backends.ollama_backend import GenerationRequest, GenerationResult, OllamaBackend
-from src.backends.vllm_backend import VLLMBackend
+from src.backends.factory import make_backend
+from src.backends.ollama_backend import GenerationRequest, GenerationResult
 from src.rubric import evaluate_response
 from src.utils import build_prompt_text, ensure_directory, estimate_token_count, load_yaml, shorten, utc_now_iso, write_json
 
@@ -77,11 +77,16 @@ class EvaluationRecord:
     error: str | None
 
 
-def load_model_configs(path: Path, backend_filter: str | None = None) -> list[ModelConfig]:
+def load_model_configs(
+    path: Path,
+    backend_filter: str | None = None,
+    selected_ids: list[str] | None = None,
+) -> list[ModelConfig]:
     """Load and filter models from YAML."""
     payload = load_yaml(path)
     models = payload.get("models", [])
     configs: list[ModelConfig] = []
+    selected_id_set = set(selected_ids or [])
     for item in models:
         if not item.get("enabled", True):
             continue
@@ -94,9 +99,14 @@ def load_model_configs(path: Path, backend_filter: str | None = None) -> list[Mo
         )
         if backend_filter and config.backend != backend_filter:
             continue
+        if selected_id_set and config.id not in selected_id_set:
+            continue
         configs.append(config)
     if not configs:
-        raise ValueError(f"No enabled models found in {path} for backend={backend_filter!r}")
+        raise ValueError(
+            f"No enabled models found in {path} for backend={backend_filter!r} "
+            f"and selected_ids={selected_ids!r}"
+        )
     return configs
 
 
@@ -129,13 +139,6 @@ class Evaluator:
     def __init__(self, output_dir: Path) -> None:
         self.output_dir = ensure_directory(output_dir)
 
-    def _make_backend(self, backend_name: str, base_url: str, timeout: int) -> BackendProtocol:
-        if backend_name == "ollama":
-            return OllamaBackend(base_url=base_url, timeout=timeout)
-        if backend_name == "vllm":
-            return VLLMBackend(base_url=base_url, timeout=timeout)
-        raise ValueError(f"Unsupported backend: {backend_name}")
-
     def run(
         self,
         models: list[ModelConfig],
@@ -145,7 +148,7 @@ class Evaluator:
         """Run all selected model and prompt combinations."""
         results: list[EvaluationRecord] = []
         for model in models:
-            backend = self._make_backend(model.backend, backend_urls[model.backend], model.timeout)
+            backend = make_backend(model.backend, backend_urls[model.backend], model.timeout)
             for prompt in prompts:
                 prompt_text = build_prompt_text(prompt.prompt, prompt.context)
                 for temperature in prompt.temperatures:
@@ -232,4 +235,3 @@ class Evaluator:
         }
         write_json(json_path, payload)
         return csv_path, json_path
-
