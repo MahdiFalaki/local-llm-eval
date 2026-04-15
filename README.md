@@ -1,6 +1,6 @@
 # local-llm-eval
 
-`local-llm-eval` is a lightweight local evaluation pipeline for served LLMs. It is built for practical offline evaluation with Ollama first, optional vLLM support, YAML-defined prompt suites, benchmark-style IFEval runs, and single-run analysis artifacts that are easy to inspect and reuse in notes or a README.
+`local-llm-eval` is a lightweight local evaluation pipeline for served LLMs. It is built for practical offline evaluation with Ollama first, optional vLLM support, YAML-defined prompt suites, benchmark-style IFEval runs, and single-run analysis artifacts that are easy to inspect and interpret.
 
 ## What It Supports
 
