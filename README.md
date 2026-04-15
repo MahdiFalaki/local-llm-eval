@@ -105,6 +105,18 @@ These artifacts matter because they cover three separate jobs cleanly:
 - diagnosis: where each model tends to fail
 - summary: a compact write-up that is easy to reuse
 
+## Example Results
+
+Example single-run IFEval summary from the generated analysis artifacts:
+
+| Model | Backend | Strict | Loose | Avg Latency | Avg TPS | Best Category | Worst Category |
+| --- | --- | ---: | ---: | ---: | ---: | --- | --- |
+| `gemma2_9b` | `ollama` | 0.7283 | 0.7579 | 2.6511 | 116.2692 | `language` | `length_constraints` |
+| `llama3_1_8b` | `ollama` | 0.7264 | 0.7652 | 2.4694 | 145.1115 | `language` | `combination` |
+| `qwen2_5_7b` | `ollama` | 0.7079 | 0.7338 | 2.0939 | 152.6595 | `language` | `length_constraints` |
+
+This is the role of `model_summary.md`: a compact overview of quality, speed, and category-level strengths and weaknesses for one completed run.
+
 ## Backend Notes
 
 - Ollama is the default and primary backend
